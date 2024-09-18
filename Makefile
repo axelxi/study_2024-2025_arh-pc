@@ -1,26 +1,18 @@
-COURSE = 
+FILES = $(patsubst %.md, %.docx, $(wildcard *.md))
+FILES += $(patsubst %.md, %.pdf, $(wildcard *.md))
 
-.PHONY: all clean
+LATEX_FORMAT =
 
-all: help
+FILTER = --filter pandoc-crossref
 
-help:
-	@echo 'Usage:'
-	@echo '  make <target>'
-	@echo 
-	@echo 'Targets:'
-	@grep -E '^[a-zA-Z_0-9.-]+:.*?##.*$$' $(MAKEFILE_LIST) | grep -v '###' | sort | cut -d: -f1- | awk 'BEGIN {FS = ":.*?##"}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
-	@grep -E '^###.*' $(MAKEFILE_LIST) | cut -d' ' -f2- | awk 'BEGIN {FS = "###"}; {printf "%s\n", $$1, $$2}'
-	@grep -E '^[a-zA-Z_0-9.-]+:.*?###.*$$' $(MAKEFILE_LIST) | sort | cut -d: -f2- | awk 'BEGIN {FS = ":.*?###"}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
-	@echo
+%.docx: %.md
+	-pandoc "$<" $(FILTER) -o "$@"
 
-list:	## List of courses
-	@./config/script/list-courses
+%.pdf: %.md
+	-pandoc "$<" $(LATEX_FORMAT) $(FILTER) -o "$@"
 
-prepare:	## Generate directories structure
-	@./config/script/prepare
-	@touch prepare
+all: $(FILES)
+	@echo $(FILES)
 
-submodule:	## Update submules
-	git submodule update --init --recursive
-	git submodule foreach 'git fetch origin; git checkout $$(git rev-parse --abbrev-ref HEAD); git reset --hard origin/$$(git rev-parse --abbrev-ref HEAD); git submodule update --recursive; git clean -dfx'
+clean:
+	-rm $(FILES) *~
